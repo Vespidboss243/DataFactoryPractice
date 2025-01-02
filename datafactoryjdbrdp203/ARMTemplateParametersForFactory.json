@@ -1,0 +1,39 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "datafactoryjdbrdp203"
+		},
+		"Appdb_connectionString": {
+			"value": ""
+		},
+		"datalaketestjdbr_accountKey": {
+			"value": ""
+		},
+		"dp203synapsejdbr_password": {
+			"value": ""
+		},
+		"vmcito_password": {
+			"value": ""
+		},
+		"datalaketestjdbr_properties_typeProperties_url": {
+			"value": "https://datalaketestjdbr.dfs.core.windows.net/"
+		},
+		"dp203synapsejdbr_properties_typeProperties_server": {
+			"value": "dp203synapsejdbr.sql.azuresynapse.net"
+		},
+		"dp203synapsejdbr_properties_typeProperties_database": {
+			"value": "datapool"
+		},
+		"dp203synapsejdbr_properties_typeProperties_userName": {
+			"value": "vespidboss"
+		},
+		"vmcito_properties_typeProperties_host": {
+			"value": "C:\\inetpub\\logs\\LogFiles\\W3SVC1"
+		},
+		"vmcito_properties_typeProperties_userId": {
+			"value": "vespiboss"
+		}
+	}
+}
