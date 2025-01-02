@@ -1,0 +1,19 @@
+{
+	"name": "Jsonlog",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "datalaketestjdbr",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "json"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

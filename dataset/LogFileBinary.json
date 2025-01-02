@@ -1,0 +1,17 @@
+{
+	"name": "LogFileBinary",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "vmcito",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "FileServerLocation"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

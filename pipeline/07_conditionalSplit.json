@@ -1,0 +1,41 @@
+{
+	"name": "07_conditionalSplit",
+	"properties": {
+		"activities": [
+			{
+				"name": "05_DataFlow_ExtractResourceGroupCondicianalSplit",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "05_DataFlow_ExtractResourceGroupCondicianalSplit",
+						"type": "DataFlowReference"
+					},
+					"staging": {
+						"linkedService": {
+							"referenceName": "datalaketestjdbr",
+							"type": "LinkedServiceReference"
+						},
+						"folderPath": "staging"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-01-02T18:22:47Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

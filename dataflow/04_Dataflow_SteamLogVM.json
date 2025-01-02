@@ -1,0 +1,74 @@
+{
+	"name": "04_Dataflow_SteamLogVM",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "LogStreamVM",
+						"type": "DatasetReference"
+					},
+					"name": "DataLogStreamVM"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "appdbProductCategory",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DiscardColumns"
+				},
+				{
+					"name": "SplitLogColumns"
+				},
+				{
+					"name": "SelectData"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          {2025-01-01 18:29:09 10.0.0.4 GET / - 80 - 181.139.39.153 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML} as string,",
+				"          {+like+Gecko)+Chrome/131.0.0.0+Safari/537.36 - 200 0 0 422} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     skipLines: 4) ~> DataLogStreamVM",
+				"DataLogStreamVM select(mapColumn(",
+				"          logdata = {2025-01-01 18:29:09 10.0.0.4 GET / - 80 - 181.139.39.153 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> DiscardColumns",
+				"DiscardColumns derive(logdata = split(logdata, \" \")) ~> SplitLogColumns",
+				"SplitLogColumns derive(LogDate = logdata[1],",
+				"          IPAdress = logdata[9],",
+				"          RequestMethod = logdata[4],",
+				"          RequestResource = logdata[5]) ~> SelectData",
+				"SelectData sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ProductCategoryID as integer,",
+				"          ParentProductCategoryID as integer,",
+				"          Name as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}

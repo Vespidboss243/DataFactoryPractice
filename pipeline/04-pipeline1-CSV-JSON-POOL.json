@@ -1,0 +1,215 @@
+{
+	"name": "04-pipeline1-CSV-JSON-POOL",
+	"properties": {
+		"activities": [
+			{
+				"name": "02_dataflow_csv_json",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "02_dataflow_csv_json",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "03-CopyData-Json-Pool",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "02_dataflow_csv_json",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.json",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SqlDWSink",
+						"allowPolyBase": true,
+						"polyBaseSettings": {
+							"rejectValue": 0,
+							"rejectType": "value",
+							"useTypeDefault": true
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "datalaketestjdbr",
+							"type": "LinkedServiceReference"
+						},
+						"path": "staging"
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['Correlationid']"
+								},
+								"sink": {
+									"name": "Correlationid"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Operationname']"
+								},
+								"sink": {
+									"name": "Operationname"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Status']"
+								},
+								"sink": {
+									"name": "Status"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Eventcategory']"
+								},
+								"sink": {
+									"name": "Eventcategory"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Level']"
+								},
+								"sink": {
+									"name": "Level"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Subscription']"
+								},
+								"sink": {
+									"name": "Subscription"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Eventinitiatedby']"
+								},
+								"sink": {
+									"name": "Eventinitiatedby"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Resourcetype']"
+								},
+								"sink": {
+									"name": "Resourcetype"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Resourcegroup']"
+								},
+								"sink": {
+									"name": "Resourcegroup"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Resource']"
+								},
+								"sink": {
+									"name": "Resource"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Jsonlog",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dp203synapsejdbr_datapool_PoolActivityLog",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "04-DeleteJson",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "03-CopyData-Json-Pool",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "Jsonlog",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"wildcardFileName": "*.json",
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2024-12-30T23:08:55Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

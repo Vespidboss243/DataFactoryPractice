@@ -1,0 +1,17 @@
+{
+	"name": "vmcito",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "FileServer",
+		"typeProperties": {
+			"host": "C:\\inetpub\\logs\\LogFiles\\W3SVC1",
+			"userId": "vespiboss",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiJiOWU5Y2YxMy0yZmE3LTQ1M2YtYjNlNC0yYTNlYjMxOWMxODkiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "vmsitadp203",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
