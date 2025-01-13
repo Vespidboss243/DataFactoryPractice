@@ -1501,6 +1501,158 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/10-NSG_pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "copydata",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "*",
+									"wildcardFileName": "*.json",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "insightsNSG",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ngsflow_json",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "06_NSG_FLOW",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "copydata",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "06_NSG_FLOW",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"NSGFlow": {},
+									"sinklogs": {}
+								}
+							},
+							"staging": {
+								"linkedService": {
+									"referenceName": "datalaketestjdbr",
+									"type": "LinkedServiceReference"
+								},
+								"folderPath": "staging"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {
+								"firstRowOnly": true
+							}
+						}
+					},
+					{
+						"name": "Deletefile",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "06_NSG_FLOW",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ngsflow_json",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"wildcardFileName": "*.*",
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/insightsNSG')]",
+				"[concat(variables('factoryId'), '/datasets/ngsflow_json')]",
+				"[concat(variables('factoryId'), '/dataflows/06_NSG_FLOW')]",
+				"[concat(variables('factoryId'), '/linkedServices/datalaketestjdbr')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Activity_log_csv')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -1726,6 +1878,53 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/datalaketestjdbr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Datapool_NSGlog')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dp203synapsejdbr",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlDWTable",
+				"schema": [
+					{
+						"name": "Recordedtime",
+						"type": "datetimeoffset",
+						"scale": 7
+					},
+					{
+						"name": "Rulename",
+						"type": "varchar"
+					},
+					{
+						"name": "SourceIPAddress",
+						"type": "varchar"
+					},
+					{
+						"name": "DestinationIPAddress",
+						"type": "varchar"
+					},
+					{
+						"name": "SourcePort",
+						"type": "varchar"
+					},
+					{
+						"name": "Decision",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "FlowTuples"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dp203synapsejdbr')]"
 			]
 		},
 		{
@@ -2710,6 +2909,29 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/insightsNSG')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalaketestjdbr",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "insights-logs-networksecuritygroupflowevent"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/datalaketestjdbr')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/logDataCSV')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -2777,6 +2999,95 @@
 						"type": "String"
 					}
 				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/datalaketestjdbr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ngsflow_json')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalaketestjdbr",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "provisional"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"records": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"time": {
+										"type": "string"
+									},
+									"systemId": {
+										"type": "string"
+									},
+									"macAddress": {
+										"type": "string"
+									},
+									"category": {
+										"type": "string"
+									},
+									"resourceId": {
+										"type": "string"
+									},
+									"operationName": {
+										"type": "string"
+									},
+									"properties": {
+										"type": "object",
+										"properties": {
+											"Version": {
+												"type": "integer"
+											},
+											"flows": {
+												"type": "array",
+												"items": {
+													"type": "object",
+													"properties": {
+														"rule": {
+															"type": "string"
+														},
+														"flows": {
+															"type": "array",
+															"items": {
+																"type": "object",
+																"properties": {
+																	"mac": {
+																		"type": "string"
+																	},
+																	"flowTuples": {
+																		"type": "array",
+																		"items": {
+																			"type": "string"
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/datalaketestjdbr')]"
@@ -3568,6 +3879,109 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/logDataCSV')]",
 				"[concat(variables('factoryId'), '/datasets/dp203synapsejdbr_datapool_PoolActivityLog')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/06_NSG_FLOW')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ngsflow_json",
+								"type": "DatasetReference"
+							},
+							"name": "NSGFlow"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "Datapool_NSGlog",
+								"type": "DatasetReference"
+							},
+							"name": "sinklogs"
+						}
+					],
+					"transformations": [
+						{
+							"name": "flattenlogs"
+						},
+						{
+							"name": "derivedColumnNSGFlow"
+						},
+						{
+							"name": "selectinterest"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          records as (time as string, systemId as string, macAddress as string, category as string, resourceId as string, operationName as string, properties as (Version as integer, flows as (rule as string, flows as (mac as string, flowTuples as string[])[])[]))[]",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine') ~> NSGFlow",
+						"NSGFlow foldDown(unrollMultiple(records,records.properties.flows.flows.flowTuples),",
+						"     mapColumn(",
+						"          records,",
+						"          flowTuples = records.properties.flows.flows.flowTuples",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flattenlogs",
+						"flattenlogs derive(Recordedtime = records.time,",
+						"          Rulename = records.properties.flows.rule,",
+						"          SourceIPAddress = split(flowTuples,\",\")[2],",
+						"          DestinationIPAddress = split(flowTuples,\",\")[3],",
+						"          SourcePort = split(flowTuples,\",\")[5],",
+						"          Decision = split(flowTuples,\",\")[8]) ~> derivedColumnNSGFlow",
+						"derivedColumnNSGFlow select(mapColumn(",
+						"          Recordedtime,",
+						"          Rulename,",
+						"          SourceIPAddress,",
+						"          DestinationIPAddress,",
+						"          SourcePort,",
+						"          Decision",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> selectinterest",
+						"selectinterest sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          Recordedtime as string,",
+						"          Rulename as string,",
+						"          SourceIPAddress as string,",
+						"          DestinationIPAddress as string,",
+						"          SourcePort as string,",
+						"          Decision as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     staged: true,",
+						"     allowCopyCommand: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          Recordedtime,",
+						"          Rulename,",
+						"          SourceIPAddress,",
+						"          DestinationIPAddress,",
+						"          SourcePort,",
+						"          Decision",
+						"     )) ~> sinklogs"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ngsflow_json')]",
+				"[concat(variables('factoryId'), '/datasets/Datapool_NSGlog')]"
 			]
 		}
 	]

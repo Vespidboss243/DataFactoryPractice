@@ -25,6 +25,89 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/appdb_customer')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Appdb",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "CustomerID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "NameStyle",
+						"type": "bit"
+					},
+					{
+						"name": "Title",
+						"type": "nvarchar"
+					},
+					{
+						"name": "FirstName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "MiddleName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "LastName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Suffix",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CompanyName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "SalesPerson",
+						"type": "nvarchar"
+					},
+					{
+						"name": "EmailAddress",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Phone",
+						"type": "nvarchar"
+					},
+					{
+						"name": "PasswordHash",
+						"type": "varchar"
+					},
+					{
+						"name": "PasswordSalt",
+						"type": "varchar"
+					},
+					{
+						"name": "rowguid",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "ModifiedDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "Customer"
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/appdbproducts')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -336,6 +419,27 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/insightsNSG')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalaketestjdbr",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "insights-logs-networksecuritygroupflowevent"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/logDataCSV')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -403,6 +507,93 @@
 						"type": "String"
 					}
 				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ngsflow_json')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalaketestjdbr",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "provisional"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"records": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"time": {
+										"type": "string"
+									},
+									"systemId": {
+										"type": "string"
+									},
+									"macAddress": {
+										"type": "string"
+									},
+									"category": {
+										"type": "string"
+									},
+									"resourceId": {
+										"type": "string"
+									},
+									"operationName": {
+										"type": "string"
+									},
+									"properties": {
+										"type": "object",
+										"properties": {
+											"Version": {
+												"type": "integer"
+											},
+											"flows": {
+												"type": "array",
+												"items": {
+													"type": "object",
+													"properties": {
+														"rule": {
+															"type": "string"
+														},
+														"flows": {
+															"type": "array",
+															"items": {
+																"type": "object",
+																"properties": {
+																	"mac": {
+																		"type": "string"
+																	},
+																	"flowTuples": {
+																		"type": "array",
+																		"items": {
+																			"type": "string"
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 			},
 			"dependsOn": []
 		},
@@ -1720,6 +1911,7 @@
 				}
 			},
 			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/appdb_customer')]",
 				"[concat(variables('factoryId'), '/datasets/appdbproducts')]",
 				"[concat(variables('factoryId'), '/datasets/factTable')]"
 			]
@@ -2041,379 +2233,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/logDataCSV')]",
 				"[concat(variables('factoryId'), '/datasets/dp203synapsejdbr_datapool_PoolActivityLog')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/03-pipeline-Datawarehouse')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "01_Dataflow_Warehouse",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [
-							{
-								"activity": "Drop Tables",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "01_Dataflow_Warehouse",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"SalesOrder": {},
-									"SalesOrderDetails": {},
-									"CustomerStream": {},
-									"ProductStream": {},
-									"ProductCategory": {},
-									"MaxCustomerSKStream": {},
-									"FactSales": {},
-									"DimCustomers": {},
-									"DimProduct": {},
-									"CacheSinkCustomerSK": {}
-								}
-							},
-							"staging": {
-								"linkedService": {
-									"referenceName": "datalaketestjdbr",
-									"type": "LinkedServiceReference"
-								},
-								"folderPath": "staging"
-							},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					},
-					{
-						"name": "Drop Tables",
-						"type": "SqlServerStoredProcedure",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"storedProcedureName": "[[dbo].[Droptables]"
-						},
-						"linkedServiceName": {
-							"referenceName": "dp203synapsejdbr",
-							"type": "LinkedServiceReference"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": [],
-				"lastPublishTime": "2024-12-30T22:27:24Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/01_Dataflow_Warehouse')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/04-pipeline1-CSV-JSON-POOL')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "02_dataflow_csv_json",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "02_dataflow_csv_json",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"CSVLOG": {},
-									"JSONLOG": {}
-								}
-							},
-							"staging": {},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					},
-					{
-						"name": "03-CopyData-Json-Pool",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "02_dataflow_csv_json",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "JsonSource",
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"wildcardFileName": "*.json",
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "JsonReadSettings"
-								}
-							},
-							"sink": {
-								"type": "SqlDWSink",
-								"allowPolyBase": true,
-								"polyBaseSettings": {
-									"rejectValue": 0,
-									"rejectType": "value",
-									"useTypeDefault": true
-								}
-							},
-							"enableStaging": true,
-							"stagingSettings": {
-								"linkedServiceName": {
-									"referenceName": "datalaketestjdbr",
-									"type": "LinkedServiceReference"
-								},
-								"path": "staging"
-							},
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"path": "$['Correlationid']"
-										},
-										"sink": {
-											"name": "Correlationid"
-										}
-									},
-									{
-										"source": {
-											"path": "$['Operationname']"
-										},
-										"sink": {
-											"name": "Operationname"
-										}
-									},
-									{
-										"source": {
-											"path": "$['Status']"
-										},
-										"sink": {
-											"name": "Status"
-										}
-									},
-									{
-										"source": {
-											"path": "$['Eventcategory']"
-										},
-										"sink": {
-											"name": "Eventcategory"
-										}
-									},
-									{
-										"source": {
-											"path": "$['Level']"
-										},
-										"sink": {
-											"name": "Level"
-										}
-									},
-									{
-										"source": {
-											"path": "$['Subscription']"
-										},
-										"sink": {
-											"name": "Subscription"
-										}
-									},
-									{
-										"source": {
-											"path": "$['Eventinitiatedby']"
-										},
-										"sink": {
-											"name": "Eventinitiatedby"
-										}
-									},
-									{
-										"source": {
-											"path": "$['Resourcetype']"
-										},
-										"sink": {
-											"name": "Resourcetype"
-										}
-									},
-									{
-										"source": {
-											"path": "$['Resourcegroup']"
-										},
-										"sink": {
-											"name": "Resourcegroup"
-										}
-									},
-									{
-										"source": {
-											"path": "$['Resource']"
-										},
-										"sink": {
-											"name": "Resource"
-										}
-									}
-								]
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "Jsonlog",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "dp203synapsejdbr_datapool_PoolActivityLog",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					},
-					{
-						"name": "04-DeleteJson",
-						"type": "Delete",
-						"dependsOn": [
-							{
-								"activity": "03-CopyData-Json-Pool",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "Jsonlog",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"enableLogging": false,
-							"storeSettings": {
-								"type": "AzureBlobFSReadSettings",
-								"recursive": true,
-								"wildcardFileName": "*.json",
-								"enablePartitionDiscovery": false
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": [],
-				"lastPublishTime": "2024-12-30T23:08:55Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/02_dataflow_csv_json')]",
-				"[concat(variables('factoryId'), '/datasets/dp203synapsejdbr_datapool_PoolActivityLog')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/05-pipeline-JSONArray-Pool')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "03_Dataflow_JSONArrays",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "03_Dataflow_JSONArrays",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"CustomerArrayJSONStream": {},
-									"Customercoursesink": {}
-								}
-							},
-							"staging": {
-								"linkedService": {
-									"referenceName": "datalaketestjdbr",
-									"type": "LinkedServiceReference"
-								},
-								"folderPath": "staging"
-							},
-							"compute": {
-								"coreCount": 8,
-								"computeType": "General"
-							},
-							"traceLevel": "Fine"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": [],
-				"lastPublishTime": "2024-12-30T23:20:48Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/03_Dataflow_JSONArrays')]"
 			]
 		}
 	]
