@@ -1,0 +1,18 @@
+{
+	"name": "insightsNSG",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "datalaketestjdbr",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "insights-logs-networksecuritygroupflowevent"
+			}
+		},
+		"schema": {}
+	}
+}

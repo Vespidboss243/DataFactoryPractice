@@ -10,7 +10,6 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "PT1H nsg log.json",
 				"fileSystem": "provisional"
 			}
 		},
