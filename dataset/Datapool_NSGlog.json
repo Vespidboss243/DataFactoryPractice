@@ -1,0 +1,42 @@
+{
+	"name": "Datapool_NSGlog",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dp203synapsejdbr",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": [
+			{
+				"name": "Recordedtime",
+				"type": "datetimeoffset",
+				"scale": 7
+			},
+			{
+				"name": "Rulename",
+				"type": "varchar"
+			},
+			{
+				"name": "SourceIPAddress",
+				"type": "varchar"
+			},
+			{
+				"name": "DestinationIPAddress",
+				"type": "varchar"
+			},
+			{
+				"name": "SourcePort",
+				"type": "varchar"
+			},
+			{
+				"name": "Decision",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "FlowTuples"
+		}
+	}
+}

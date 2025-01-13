@@ -1,0 +1,97 @@
+{
+	"name": "06_NSG_FLOW",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ngsflow_json",
+						"type": "DatasetReference"
+					},
+					"name": "NSGFlow"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Datapool_NSGlog",
+						"type": "DatasetReference"
+					},
+					"name": "sinklogs"
+				}
+			],
+			"transformations": [
+				{
+					"name": "flattenlogs"
+				},
+				{
+					"name": "derivedColumnNSGFlow"
+				},
+				{
+					"name": "selectinterest"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          records as (time as string, systemId as string, macAddress as string, category as string, resourceId as string, operationName as string, properties as (Version as integer, flows as (rule as string, flows as (mac as string, flowTuples as string[])[])[]))[]",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments') ~> NSGFlow",
+				"NSGFlow foldDown(unrollMultiple(records,records.properties.flows.flows.flowTuples),",
+				"     mapColumn(",
+				"          records,",
+				"          flowTuples = records.properties.flows.flows.flowTuples",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flattenlogs",
+				"flattenlogs derive(Recordedtime = records.time,",
+				"          Rulename = records.properties.flows.rule,",
+				"          SourceIPAddress = split(flowTuples,\",\")[2],",
+				"          DestinationIPAddress = split(flowTuples,\",\")[3],",
+				"          SourcePort = split(flowTuples,\",\")[5],",
+				"          Decision = split(flowTuples,\",\")[8]) ~> derivedColumnNSGFlow",
+				"derivedColumnNSGFlow select(mapColumn(",
+				"          Recordedtime,",
+				"          Rulename,",
+				"          SourceIPAddress,",
+				"          DestinationIPAddress,",
+				"          SourcePort,",
+				"          Decision",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectinterest",
+				"selectinterest sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          Recordedtime as string,",
+				"          Rulename as string,",
+				"          SourceIPAddress as string,",
+				"          DestinationIPAddress as string,",
+				"          SourcePort as string,",
+				"          Decision as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     staged: true,",
+				"     allowCopyCommand: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          Recordedtime,",
+				"          Rulename,",
+				"          SourceIPAddress,",
+				"          DestinationIPAddress,",
+				"          SourcePort,",
+				"          Decision",
+				"     )) ~> sinklogs"
+			]
+		}
+	}
+}
